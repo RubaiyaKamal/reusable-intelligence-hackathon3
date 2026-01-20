@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: learnflow-api
+  namespace: learnflow
+  labels:
+    app: learnflow-api
+  annotations:
+    dapr.io/enabled: "true"
+    dapr.io/app-id: "learnflow-api"
+    dapr.io/app-port: "8000"
+    dapr.io/log-level: "info"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: learnflow-api
+  template:
+    metadata:
+      labels:
+        app: learnflow-api
+    spec:
+      containers:
+      - name: service
+        image: learnflow-api:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-credentials
+              key: api-key
+        - name: DAPR_HTTP_PORT
+          value: "3500"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
