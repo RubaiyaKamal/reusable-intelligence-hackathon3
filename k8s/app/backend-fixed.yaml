@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storyforge-backend
+  namespace: storyforge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: storyforge-backend
+  template:
+    metadata:
+      labels:
+        app: storyforge-backend
+    spec:
+      initContainers:
+      - name: git-clone
+        image: alpine/git
+        command:
+        - sh
+        - -c
+        - git clone https://github.com/RubaiyaKamal/reusable-intelligence-hackathon3.git /repo
+        volumeMounts:
+        - name: repo
+          mountPath: /repo
+      containers:
+      - name: backend
+        image: python:3.11-slim
+        workingDir: /app/backend
+        command:
+        - sh
+        - -c
+        - pip install --no-cache-dir -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000
+        ports:
+        - containerPort: 8000
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: storyforge-secrets
+              key: openai-api-key
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: storyforge-secrets
+              key: postgres-password
+        - name: DATABASE_URL
+          value: postgresql://storyforge_user:StoryForge2024SecureDB@storyforge-postgres-postgresql.storyforge.svc.cluster.local:5432/storyforge_db
+        - name: REDIS_URL
+          value: redis://storyforge-redis-master.storyforge.svc.cluster.local:6379
+        volumeMounts:
+        - name: repo
+          mountPath: /app
+      volumes:
+      - name: repo
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: storyforge-backend
+  namespace: storyforge
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+  selector:
+    app: storyforge-backend

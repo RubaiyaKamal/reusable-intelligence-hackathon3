@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storyforge-frontend
+  namespace: storyforge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: storyforge-frontend
+  template:
+    metadata:
+      labels:
+        app: storyforge-frontend
+    spec:
+      initContainers:
+      - name: git-clone
+        image: alpine/git
+        command:
+        - sh
+        - -c
+        - git clone https://github.com/RubaiyaKamal/reusable-intelligence-hackathon3.git /repo
+        volumeMounts:
+        - name: repo
+          mountPath: /repo
+      containers:
+      - name: frontend
+        image: node:18-alpine
+        workingDir: /app/frontend
+        command:
+        - sh
+        - -c
+        - npm install && npm run build && npm start
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: http://storyforge-backend.storyforge.svc.cluster.local:8000
+        volumeMounts:
+        - name: repo
+          mountPath: /app
+      volumes:
+      - name: repo
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: storyforge-frontend
+  namespace: storyforge
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 3000
+  selector:
+    app: storyforge-frontend
