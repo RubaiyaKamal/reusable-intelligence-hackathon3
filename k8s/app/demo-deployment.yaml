@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storyforge-demo
+  namespace: storyforge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: storyforge-demo
+  template:
+    metadata:
+      labels:
+        app: storyforge-demo
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html
+        configMap:
+          name: storyforge-demo-html
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: storyforge-demo-html
+  namespace: storyforge
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>StoryForge - Running on Oracle Cloud</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 50px auto;
+                padding: 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+            .container {
+                background: rgba(255,255,255,0.1);
+                border-radius: 10px;
+                padding: 30px;
+                backdrop-filter: blur(10px);
+            }
+            h1 { color: #fff; text-align: center; }
+            .status { background: #4CAF50; padding: 10px; border-radius: 5px; margin: 10px 0; }
+            .info { background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px; margin: 15px 0; }
+            ul { list-style: none; padding: 0; }
+            li { padding: 8px; margin: 5px 0; background: rgba(255,255,255,0.1); border-radius: 3px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🚀 StoryForge Educational Platform</h1>
+            <div class="status">
+                ✅ Status: Running on Oracle Cloud Infrastructure (OCI)
+            </div>
+
+            <div class="info">
+                <h2>Deployment Details:</h2>
+                <ul>
+                    <li><strong>Cloud Provider:</strong> Oracle Cloud Infrastructure (OCI)</li>
+                    <li><strong>Region:</strong> India West (Mumbai) - ap-mumbai-1</li>
+                    <li><strong>Kubernetes Service:</strong> Oracle Kubernetes Engine (OKE)</li>
+                    <li><strong>Cluster:</strong> storyforge-prod</li>
+                    <li><strong>Nodes:</strong> 3 Worker Nodes</li>
+                    <li><strong>Kubernetes Version:</strong> v1.34.2</li>
+                </ul>
+            </div>
+
+            <div class="info">
+                <h2>Infrastructure Components:</h2>
+                <ul>
+                    <li>✅ PostgreSQL Database - Running</li>
+                    <li>✅ Redis Cache - Running</li>
+                    <li>✅ Load Balancer - Active</li>
+                    <li>✅ Ingress Controller - Configured</li>
+                </ul>
+            </div>
+
+            <div class="info">
+                <h2>Application Features:</h2>
+                <ul>
+                    <li>📚 AI-Powered Story Reading</li>
+                    <li>🎓 Teacher Dashboard</li>
+                    <li>👨‍🎓 Student Progress Tracking</li>
+                    <li>🤖 OpenAI Integration</li>
+                    <li>📊 Real-time Analytics</li>
+                </ul>
+            </div>
+
+            <p style="text-align: center; margin-top: 30px;">
+                <strong>Powered by Oracle Cloud Infrastructure</strong><br>
+                Deployed: February 2026
+            </p>
+        </div>
+    </body>
+    </html>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: storyforge-demo
+  namespace: storyforge
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: storyforge-demo
